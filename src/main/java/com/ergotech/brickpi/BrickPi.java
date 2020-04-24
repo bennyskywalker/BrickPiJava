@@ -25,6 +25,7 @@ public class BrickPi extends BrickPiCommunications {
             LoggerFactory.getLogger(BrickPi.class.getName());
 
     public static final String DEFAULT_DEVICE = "/dev/ttyAMA0";
+    //public static final String DEFAULT_DEVICE= "/dev/spidev0.1";
 
     /**
      * The singleton instance of this class.
