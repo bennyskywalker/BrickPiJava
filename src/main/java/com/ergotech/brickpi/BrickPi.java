@@ -11,6 +11,10 @@ package com.ergotech.brickpi;
 import com.pi4j.io.serial.Serial;
 import com.pi4j.io.serial.SerialFactory;
 import com.pi4j.io.serial.SerialPortException;
+import com.pi4j.io.spi.SpiChannel;
+import com.pi4j.io.spi.SpiDevice;
+import com.pi4j.io.spi.SpiFactory;
+
 import java.io.IOException;
 
 import org.slf4j.Logger;
@@ -36,6 +40,8 @@ public class BrickPi extends BrickPiCommunications {
      * Serial port instance.
      */
     protected final Serial serial;
+    
+    protected final SpiDevice spi;
 
     /**
      * Return the brick pi singleton.
@@ -59,7 +65,8 @@ public class BrickPi extends BrickPiCommunications {
     }
     
     public BrickPi() throws IOException {
-        this(DEFAULT_DEVICE, 500000);
+        //this(DEFAULT_DEVICE, 500000);
+    	this(SpiChannel.CS0);
     }
 
     /**
@@ -71,6 +78,7 @@ public class BrickPi extends BrickPiCommunications {
      */
     public BrickPi(String device, int baudRate) throws IOException {
         try {
+        	spi = null;
             serial = SerialFactory.createInstance();
             //System.out.println ("Port opening... "  + com.pi4j.wiringpi.Serial.serialOpen("/dev/ttyAMA0", 500000));
             System.out.println("Opening Serial Port " + device + ':' + baudRate);
@@ -85,6 +93,44 @@ public class BrickPi extends BrickPiCommunications {
             throw new IOException("Failed to open communications to BrickPi");
         }
     }
+    
+    public BrickPi(SpiChannel spiChannel) throws IOException {
+    	try {
+    		serial = null;
+    		spi = SpiFactory.getInstance(spiChannel, SpiDevice.DEFAULT_SPI_SPEED, SpiDevice.DEFAULT_SPI_MODE);
+    		
+    		while(true) {
+    			read();
+    			Thread.sleep(1000);
+    		}
+    	} catch(Exception ex) {
+    		LOGGER.error(ex.getMessage(), ex);
+    		throw new IOException("Failed to open spi to BrickPi");
+    	}
+    }
+    
+    public static short ADC_CHANNEL_COUNT = 8;
+    private void read() throws IOException, InterruptedException {
+    	for(short channel=0;channel<ADC_CHANNEL_COUNT;channel++) {
+    		int conversion_value = getConversionValue(channel);
+    		System.out.println(String.format(" | %04d", conversion_value));
+    	}
+    }
+    
+    private int getConversionValue(short channel) throws IOException {
+    	byte data[] = new byte[] {
+    			(byte) 0b00000001,
+    			(byte)(0b00000000 | ((channel&7)<<4)),
+    			(byte) 0b00000000
+    	};
+    	
+    	byte[] result = spi.write(data);
+    	
+    	int value = (result[1]<<8) & 0b1100000000;
+    	value |= (result[2] & 0xff);
+    	return value;
+   	}
+
 
     /**
      * Send a packet to the brick pi.
