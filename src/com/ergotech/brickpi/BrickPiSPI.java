@@ -44,20 +44,23 @@ public class BrickPiSPI extends BrickPiCommunications {
     }
     
     public BrickPiSPI() throws IOException {
-    	this(SpiChannel.CS0);
+    	this(SpiChannel.CS1);
     }
     
     public BrickPiSPI(SpiChannel spiChannel) throws IOException {
     	try {
     		spi = SpiFactory.getInstance(spiChannel, 
     									500000, 
-   										SpiMode.MODE_0);    		
+   										SpiMode.MODE_0);
+    		
+    		sendCustom();
     	} catch(Exception ex) {
     		LOGGER.error(ex.getMessage(), ex);
     		throw new IOException("Failed to open spi to BrickPi");
     	}
     }
     
+    /*
     public static short ADC_CHANNEL_COUNT = 8;
     private void read() throws IOException, InterruptedException {
     	for(short channel=0;channel<ADC_CHANNEL_COUNT;channel++) {
@@ -79,6 +82,21 @@ public class BrickPiSPI extends BrickPiCommunications {
     	value |= (result[2] & 0xff);
     	return value;
    	}
+   	*/
+    
+    @Override
+    public void setTimeout(long timeout) throws IOException {
+    	return;
+    }
+    
+    //Custom message
+    public void sendCustom() throws IOException {
+    	byte[] sendTest = new byte[] {0x01, 22, 0x01, 25}; 
+    			//{0x01, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    	byte[] result = spi.write(sendTest);
+    	System.out.println(result);
+    	return;
+    }
 
 
     /**

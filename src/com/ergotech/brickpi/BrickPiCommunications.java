@@ -40,7 +40,7 @@ public abstract class BrickPiCommunications {
     /**
      * The current debug level.
      */
-    public static int DEBUG_LEVEL = 0;
+    public static int DEBUG_LEVEL = 1;
     
     /**
      * It would seem to be a desirable, and fairly likely feature that the brick

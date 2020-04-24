@@ -29,8 +29,7 @@ public class BrickPi extends BrickPiCommunications {
             LoggerFactory.getLogger(BrickPi.class.getName());
 
     public static final String DEFAULT_DEVICE = "/dev/ttyAMA0";
-    //public static final String DEFAULT_DEVICE= "/dev/spidev0.1";
-
+    
     /**
      * The singleton instance of this class.
      */
@@ -65,8 +64,8 @@ public class BrickPi extends BrickPiCommunications {
     }
     
     public BrickPi() throws IOException {
-        //this(DEFAULT_DEVICE, 500000);
-    	this(SpiChannel.CS0);
+        this(DEFAULT_DEVICE, 500000);
+    	//this(SpiChannel.CS0);
     }
 
     /**
