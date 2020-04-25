@@ -7,10 +7,10 @@ package com.ergotech.brickpi.motion;
  */
 public enum MotorPort {
     
-    MA(0),
-    MB(1),
-    MC(2),
-    MD(3);
+    MA(1),
+    MB(2),
+    MC(4),
+    MD(8);
 
     private final int port;
     

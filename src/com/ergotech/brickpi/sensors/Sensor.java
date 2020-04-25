@@ -203,6 +203,10 @@ public class Sensor {
         value = BrickPiCommunications.decodeInt(sensorType.getDecodeBitCount(), message, startLocation);
         return startLocation + sensorType.getDecodeBitCount();
     }
+    
+    public void setValue(int value) {
+    	this.value = value; 
+    }
 
     /**
      * Returns the current value.

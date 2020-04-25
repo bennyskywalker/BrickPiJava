@@ -38,7 +38,7 @@ public class EV3TouchSensor extends Sensor {
      * Returns the 1 or 0 for consistency with the sensor interface.
      */
     public int getValue() {
-        return super.getValue() > 1020 ? 1 : 0;
+        return super.getValue();
     }
 
 

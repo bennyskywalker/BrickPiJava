@@ -7,10 +7,10 @@ package com.ergotech.brickpi.sensors;
  */
 public enum SensorPort {
     
-    S1(0),
-    S2(1),
-    S3(2),
-    S4(3);
+    S1(1),
+    S2(2),
+    S3(3),
+    S4(8);
 
     private final int port;
     

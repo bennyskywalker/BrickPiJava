@@ -54,6 +54,8 @@ public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
     	
     	sensorMap = new HashMap<SensorPort, Sensor>();
 		getManufacturer();
+		
+		//motorTest();
     }
 
     /**
@@ -73,8 +75,8 @@ public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
         byte[] packet = buildByteMessageArray(BPSPI_MESSAGE_TYPE.SET_SENSOR_TYPE.getPayloadSize());
         packet[0] = brickPiAddress;
         packet[1] = BPSPI_MESSAGE_TYPE.SET_SENSOR_TYPE.getByte();
-        packet[3] = (byte)port.getPort();
-        packet[4] = (byte)sensor.getSensorType();
+        packet[2] = (byte)port.getPort();
+        packet[3] = (byte)sensor.getSensorType();
         
         byte [] ret = sendToBrickPi(packet);           
         
@@ -113,6 +115,8 @@ public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
         if(verifyTransaction(result)) {
         	//Set the Sensor result value
         	//Get the value for the sensor
+        	//Need to hand this in for the appropriate decoding type
+        	sensor.setValue(result[6]);
         }
         
         return (T) sensor;
@@ -177,11 +181,25 @@ public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
         packet[2] = (byte)motorPort.getPort();
         packet[3] = (byte)power;
         
-        byte[] ret = sendToBrickPi(packet);           
-        
+        byte[] ret = sendToBrickPi(packet);
+                
     	if(verifyTransaction(ret)==false) {
     		throw new IOException("failed setSensor");
     	}
+    }
+    
+    public void motorTest() {
+    	byte[] packet = new byte[]{0x01, 21, 15, 30};
+    	
+    	try {
+    		byte[] result = sendToBrickPi(packet);    	
+    
+    		Thread.sleep(5000);
+    		
+    		packet = new byte[]{0x01, 21, 15, 0};
+    		result = sendToBrickPi(packet);
+    	}
+    	catch(Exception ex) {}
     }
         
     
@@ -194,7 +212,7 @@ public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
 		//{address, 21, 15, 0}; motor test 
 		//{address, 0x01, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     	
-    	byte[] result = spi.write(sendTest);
+    	byte[] result = sendToBrickPi(sendTest);
     	
     	if(verifyTransaction(result)==false) {
     		throw new IOException("get Manufacturer failed");

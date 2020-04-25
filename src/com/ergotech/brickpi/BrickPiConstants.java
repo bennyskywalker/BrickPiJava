@@ -34,7 +34,7 @@ public class BrickPiConstants {
         GET_VOLTAGE_VCC(10),
         SET_ADDRESS(11), //11
 
-        SET_SENSOR_TYPE(12), //12
+        SET_SENSOR_TYPE(12,0), //12
 
         GET_SENSOR_1(13), //13
         GET_SENSOR_2(14),

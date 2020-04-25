@@ -11,9 +11,9 @@ public enum SensorType {
     I2C(2),
     CUSTOM(3),
 
-    TOUCH(4,3),
+    TOUCH(4,3, 6),
     NXT_TOUCH(5),
-    EV3_TOUCH(6,3),
+    EV3_TOUCH(6,3,6),
 
     NXT_LIGHT_ON(7),
     NXT_LIGHT_OFF(8),
@@ -46,12 +46,18 @@ public enum SensorType {
 	
 	private int type;
 	private int payloadSize;
+	private int resultIndex;
 	
 	SensorType(int type) {
-		this(type, 0);
+		this(type, 0, 0);
+	}
+	
+	SensorType(int type, int payloadSize) {
+		this(type, payloadSize, 0);
 	}
 
-    private SensorType(int type, int payloadSize) {
+
+    private SensorType(int type, int payloadSize, int resultIndex) {
         this.type = (byte)type;
         this.payloadSize = payloadSize;
     }
