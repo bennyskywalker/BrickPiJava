@@ -45,18 +45,23 @@ public class BrickPiTests {
         } catch (InterruptedException ex) {
             Logger.getLogger(BrickPiTests.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
+        /*
         // add touch sensors to all the ports.        
         brickPi.setSensor(new Sensor(SensorType.Ultrasonic), SensorPort.S1);
         brickPi.setSensor(new TouchSensor(), SensorPort.S2);
         brickPi.setSensor(new Sensor(SensorType.Raw), SensorPort.S3);
         brickPi.setSensor(new Sensor(SensorType.Raw), SensorPort.S4);
+        */
         
+        /*
         try {
             // configure the sensors
-            brickPi.setupSensors();
+            //brickPi.setupSensors();
         } catch (IOException ex) {
             Logger.getLogger(BrickPiTests.class.getName()).log(Level.SEVERE, null, ex);
         }
+        */
 
         for (int counter = 0; counter < 5; counter++) {
             System.out.println("Update Values");
@@ -70,20 +75,22 @@ public class BrickPiTests {
             System.out.println("Sensors: " + brickPi.getSensor(SensorPort.S1).getValue() + " " + brickPi.getSensor(SensorPort.S2).getValue() + " " + brickPi.getSensor(SensorPort.S3).getValue() + " " + brickPi.getSensor(SensorPort.S4).getValue());
         }
 
+        /*
         brickPi.setSensor(new Sensor(SensorType.UltrasonicSS), SensorPort.S2);
         try {
             // configure the sensors
-            brickPi.setupSensors();
+            //brickPi.setupSensors();
         } catch (IOException ex) {
             Logger.getLogger(BrickPiTests.class.getName()).log(Level.SEVERE, null, ex);
         }
+        */
 
         //System.exit(0);
         Motor motor = new Motor();
 //        motor.setCommandedOutput(0);
 //        motor.setEnabled(true);
 //        motor.resetEncoder();
-        brickPi.setMotor(motor, MotorPort.MA);
+        //brickPi.setMotor(motor, MotorPort.MA);
 //        motor.setCommandedOutput(25);
 //        for (int counter = 0; counter < 50; counter++) {
 //            try {

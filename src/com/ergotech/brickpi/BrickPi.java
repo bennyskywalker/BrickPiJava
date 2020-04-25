@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 /**
  * This class provides utility method for communication with the brick pi.
  */
-public class BrickPi extends BrickPiCommunications {
+public class BrickPi extends BrickPiCommunications implements IBrickPi {
 
     private static final Logger LOGGER = 
             LoggerFactory.getLogger(BrickPi.class.getName());
