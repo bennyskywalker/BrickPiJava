@@ -14,14 +14,14 @@ public interface IBrickPi {
 	 * @param motorPort
 	 * @param power
 	 */
-	public void setMotor(MotorPort motorPort, int power) throws IOException;
+	public void setMotor(byte address, MotorPort motorPort, int power) throws IOException;
 	
 	/**
 	 * Set the sensor type on the port
 	 * @param sensor
 	 * @param port
 	 */
-	public void setSensor(Sensor sensor, SensorPort port) throws IOException;
+	public void setSensor(byte address, Sensor sensor, SensorPort port) throws IOException;
 	
-	public void setTimeout(long timeout) throws IOException;
+	public <T extends Sensor> T getSensor(byte address, SensorPort port) throws IOException;
 }

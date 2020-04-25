@@ -22,7 +22,7 @@ public class BrickPiConstants {
 	public enum BPSPI_MESSAGE_TYPE {
         NONE(0), //0
 
-        GET_MANUFACTURER(1), //1
+        GET_MANUFACTURER(1, 20), //1
         GET_NAME(2),
         GET_HARDWARE_VERSION(3),
         GET_FIRMWARE_VERSION(4),
@@ -75,9 +75,15 @@ public class BrickPiConstants {
         GET_MOTOR_D_STATUS(37);
 		
 		private final int message;
+		private final int payloadSize;
 		
 		BPSPI_MESSAGE_TYPE(int message) {
+			this(message, 0);
+		}
+		
+		BPSPI_MESSAGE_TYPE(int message, int payloadSize) {
 			this.message = message;
+			this.payloadSize = payloadSize;			
 		}
 		
 		public int getInt() {
@@ -86,6 +92,10 @@ public class BrickPiConstants {
 		
 		public byte getByte() {
 			return (byte)this.message;
+		}
+		
+		public int getPayloadSize() {
+			return this.payloadSize;
 		}
 	}
 	

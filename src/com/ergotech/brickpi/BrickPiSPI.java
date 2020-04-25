@@ -1,26 +1,31 @@
 package com.ergotech.brickpi;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.ergotech.brickpi.BrickPiConstants.BPSPI_MESSAGE_TYPE;
+import com.ergotech.brickpi.motion.MotorPort;
+import com.ergotech.brickpi.sensors.Sensor;
+import com.ergotech.brickpi.sensors.SensorPort;
 import com.pi4j.io.spi.SpiChannel;
-import com.pi4j.io.spi.SpiDevice;
-import com.pi4j.io.spi.SpiFactory;
-import com.pi4j.io.spi.SpiMode;
 
 public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BrickPi.class.getName());
+    private final byte brickPiAddress = 0x01;
 
     /**
      * The singleton instance of this class.
      */
     protected static BrickPiSPI brickPi;
     
-    protected final SpiDevice spi;
-    private byte[] resultBytes;
+    private Map<SensorPort, Sensor> sensorMap;
+    
+    
 
     /**
      * Return the brick pi singleton.
@@ -45,54 +50,103 @@ public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
     
     public BrickPiSPI() throws IOException {
     	this(SpiChannel.CS1);
+    	
+		getManufacturer(brickPiAddress);
     }
     
     public BrickPiSPI(SpiChannel spiChannel) throws IOException {
-    	try {
-    		spi = SpiFactory.getInstance(spiChannel, 
-    									500000, 
-   										SpiMode.MODE_0);
-    		
-    		sendCustom();
-    	} catch(Exception ex) {
-    		LOGGER.error(ex.getMessage(), ex);
-    		throw new IOException("Failed to open spi to BrickPi");
+    	super(spiChannel);
+    	
+    	sensorMap = new HashMap<SensorPort, Sensor>();
+    }
+
+    /**
+     * Set the sensor at the particular port. There are current four sensor
+     * ports.
+     *
+     * @param sensor the sensor to associate with the port. May be null to clear
+     * the sensor configuration.
+     * @param port the port.
+     */
+    public void setSensor(byte address, Sensor sensor, SensorPort port) throws IOException {
+    	        
+    	//Keep internal structure
+    	sensorMap.put(port, sensor);
+    	
+    	//Setup in the Brick Pi
+        byte[] packet = buildByteMessageArray(BPSPI_MESSAGE_TYPE.SET_SENSOR_TYPE.getPayloadSize());
+        packet[0] = address;
+        packet[1] = BPSPI_MESSAGE_TYPE.SET_SENSOR_TYPE.getByte();
+        packet[3] = (byte)port.getPort();
+        packet[4] = (byte)sensor.getSensorType();
+        
+        byte [] ret = sendToBrickPi(packet);           
+        
+    	if(verifyTransaction(ret)==false) {
+    		throw new IOException("failed setSensor");
     	}
     }
-    
-    /*
-    public static short ADC_CHANNEL_COUNT = 8;
-    private void read() throws IOException, InterruptedException {
-    	for(short channel=0;channel<ADC_CHANNEL_COUNT;channel++) {
-    		int conversion_value = getConversionValue(channel);
-    		System.out.println(String.format(" | %04d", conversion_value));
+
+    /**
+     * Returns the sensor attached to a particular port. This method will not
+     * return null. If a sensor has not previously been attached to the port, a
+     * RawSensor will be created, attached and returned.
+     *
+     * @param <T> the sensor associated with the port
+     * @param port the port associated with the requested sensor.
+     * @return a valid Sensor object. If no sensor is current associated with
+     * the port a RawSensor will be returned.
+     */
+    @SuppressWarnings("unchecked")
+    public <T extends Sensor> T getSensor(byte address, SensorPort sensorPort) {
+    	
+    	Sensor sensor = sensorMap.get(sensorPort);
+        int port = sensorPort.getPort();
+        
+        //byte[] packet = buildByteMessageArray()
+        
+        /*
+        if (sensorType[port] == null) {
+            LOGGER.debug("Uninitialized sensor: {}", port);
+            sensorType[port] = new Sensor(SensorType.Raw);
+        }
+        */
+        return (T) sensor;
+    }    
+
+    /**
+     * Set the motor at the particular port. There are currently four motor ports.
+     *
+     * @param motor the motor to associate with the port. May be null to clear
+     * the motor configuration.
+     * @param port the port. 
+     */
+    public void setMotor(byte address, MotorPort motorPort, int power) throws IOException {
+                
+        byte[] packet = buildByteMessageArray(BPSPI_MESSAGE_TYPE.SET_MOTOR_POWER.getPayloadSize()); 
+        
+        packet[0] = address;
+        packet[1] = BPSPI_MESSAGE_TYPE.SET_MOTOR_POWER.getByte();
+        packet[2] = (byte)motorPort.getPort();
+        packet[3] = (byte)power;
+        
+        byte[] ret =sendToBrickPi(packet);           
+        
+    	if(verifyTransaction(ret)==false) {
+    		throw new IOException("failed setSensor");
     	}
     }
-    
-    private int getConversionValue(short channel) throws IOException {
-    	byte data[] = new byte[] {
-    			(byte) 0b00000001,
-    			(byte)(0b00000000 | ((channel&7)<<4)),
-    			(byte) 0b00000000
-    	};
-    	
-    	byte[] result = spi.write(data);
-    	
-    	int value = (result[1]<<8) & 0b1100000000;
-    	value |= (result[2] & 0xff);
-    	return value;
-   	}
-   	*/
-    
-    @Override
-    public void setTimeout(long timeout) throws IOException {
-    	return;
-    }
+        
     
     //Custom message
-    public void sendCustom() throws IOException {
-    	byte[] sendTest = new byte[] {0x01, 21, 15, 0}; 
-    			//{0x01, 0x01, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    public void getManufacturer(byte address) throws IOException {
+    	byte[] sendTest = buildByteMessageArray(BPSPI_MESSAGE_TYPE.GET_MANUFACTURER.getPayloadSize());
+    	
+    	sendTest[0] = address;
+    	sendTest[1] = BPSPI_MESSAGE_TYPE.GET_MANUFACTURER.getByte();
+		//{address, 21, 15, 0}; motor test 
+		//{address, 0x01, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    	
     	byte[] result = spi.write(sendTest);
     	
     	String retCode = String.format("%02X",result[3]);
@@ -111,51 +165,4 @@ public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
     	return;
     }
 
-
-    /**
-     * Send a packet to the brick pi.
-     *
-     * @param destinationAddress
-     * @param packet
-     */
-    protected void sendToBrickPi(byte destinationAddress, byte[] packet) {
-    	byte toSend[] = new byte[2+packet.length];
-    	
-    	toSend[0] = destinationAddress;
-    	System.arraycopy(packet, 0, toSend, 1, packet.length);
-    	
-    	if (DEBUG_LEVEL > 0) {
-            StringBuffer output = new StringBuffer();
-            output.append("Sending");
-            for (byte toAdd : toSend) {
-                output.append(" ");
-                output.append(Integer.toHexString(toAdd & 0xFF));
-            }
-            System.out.println(output.toString());
-        }
-    	
-    	try {
-        	resultBytes = new byte[] {};
-        	resultBytes = spi.write(toSend);
-        }
-        catch(IOException ex) {
-    		LOGGER.error(ex.getMessage(), ex);        	
-        }
-    }
-
-    protected byte[] readFromBrickPi(int timeout) throws IOException { // timeout in mS
-        
-    	if (DEBUG_LEVEL > 0) {
-            StringBuffer input = new StringBuffer();
-            input.append("Received ");
-
-            for (byte received : resultBytes) {
-                input.append(" ");
-                input.append(Integer.toHexString(received & 0xFF));
-            }
-            System.out.println(input.toString());
-        }
-    	
-    	return resultBytes;
-    }
 }
