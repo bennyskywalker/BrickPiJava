@@ -91,10 +91,23 @@ public class BrickPiSPI extends BrickPiCommunications {
     
     //Custom message
     public void sendCustom() throws IOException {
-    	byte[] sendTest = new byte[] {0x01, 22, 0x01, 25}; 
-    			//{0x01, 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    	byte[] sendTest = new byte[] {0x01, 21, 15, 0}; 
+    			//{0x01, 0x01, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     	byte[] result = spi.write(sendTest);
-    	System.out.println(result);
+    	
+    	String retCode = String.format("%02X",result[3]);
+    	System.out.println(retCode);
+    	if(retCode.compareTo("A5")==0) {
+    		for(int i=4;i<result.length;i++) {
+    			System.out.print(Character.toString((char)result[i]));		
+    		}
+    		System.out.println("");
+    	}
+    	
+    	try {
+    		Thread.sleep(5000);
+    	} catch(Exception ex) {}
+    	System.exit(0);
     	return;
     }
 
