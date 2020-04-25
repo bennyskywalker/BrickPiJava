@@ -149,6 +149,10 @@ public class Sensor {
     public final byte getSensorType() {
         return sensorType.getType();
     }
+    
+    public final SensorType getSensorTypeEnum() {
+    	return sensorType;
+    }
 
     /**
      * @param sensorType The type of this sensor. 

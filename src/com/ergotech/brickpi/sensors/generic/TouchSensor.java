@@ -6,19 +6,21 @@
  *
  *  This is a library of functions for the RPi to communicate with the BrickPi.
  */
-package com.ergotech.brickpi.sensors;
+package com.ergotech.brickpi.sensors.generic;
+
+import com.ergotech.brickpi.sensors.Sensor;
+import com.ergotech.brickpi.sensors.SensorType;
 
 /**
  * Representation of a Touch Sensor.
- * @author sdaubin
  */
-public class EV3TouchSensor extends Sensor {
+public class TouchSensor extends Sensor {
 
     /**
      * Returns an instance of this sensor.
      */
-    public EV3TouchSensor() {
-        super(SensorType.EV3Touch);
+    public TouchSensor() {
+        super(SensorType.TOUCH);
     }
 
     /**
@@ -28,14 +30,14 @@ public class EV3TouchSensor extends Sensor {
      * @return the last value read from the sensor.
      */
     public boolean isSet() {
-        return getValue() > 1020;
+        return getValue() > 0;
     }
     
      /**
      * Returns the 1 or 0 for consistency with the sensor interface.
      */
     public int getValue() {
-        return super.getValue() > 1020 ? 1 : 0;
+        return getValue() > 0 ? 1 : 0;
     }
 
 

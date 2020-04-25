@@ -133,7 +133,11 @@ public abstract class BrickPiCommunications {
     
     protected boolean verifyTransaction(byte [] result) {
     	String retCode = String.format("%02X",result[3]);
-    	System.out.println(retCode);
+    	
+    	if(DEBUG_LEVEL>0) {
+    		System.out.println(retCode);	
+    	}
+    	
     	if(retCode.compareTo("A5")==0) {
     		return true;
     	}

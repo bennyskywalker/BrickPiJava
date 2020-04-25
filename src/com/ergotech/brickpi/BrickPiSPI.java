@@ -11,11 +11,12 @@ import com.ergotech.brickpi.BrickPiConstants.BPSPI_MESSAGE_TYPE;
 import com.ergotech.brickpi.motion.MotorPort;
 import com.ergotech.brickpi.sensors.Sensor;
 import com.ergotech.brickpi.sensors.SensorPort;
+import com.ergotech.brickpi.sensors.SensorType;
 import com.pi4j.io.spi.SpiChannel;
 
 public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BrickPi.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(BrickPiSPI.class.getName());
     private final byte brickPiAddress = 0x01;
 
     /**
@@ -32,14 +33,14 @@ public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
      *
      * @return the brick pi instance.
      */
-    public static IBrickPi getBrickPi() {
+    public static IBrickPi getBrickPi(byte address) {
         if (brickPi == null) {
             try {
                 // we'll try/catch the exception and log it here.
                 // the "getBrickPi" could be called often and should not
                 // fail (at least after initial debugging) and catch the 
                 // exception externally might be irritating after a while...
-                brickPi = new BrickPiSPI();
+                brickPi = new BrickPiSPI(address, SpiChannel.CS1);
 
             } catch (IOException ex) {
                 LOGGER.error(ex.getMessage(), ex);
@@ -47,17 +48,12 @@ public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
         }
         return brickPi;
     }
-    
-    public BrickPiSPI() throws IOException {
-    	this(SpiChannel.CS1);
-    	
-		getManufacturer(brickPiAddress);
-    }
-    
-    public BrickPiSPI(SpiChannel spiChannel) throws IOException {
+        
+    private BrickPiSPI(byte address, SpiChannel spiChannel) throws IOException {
     	super(spiChannel);
     	
     	sensorMap = new HashMap<SensorPort, Sensor>();
+		getManufacturer();
     }
 
     /**
@@ -68,14 +64,14 @@ public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
      * the sensor configuration.
      * @param port the port.
      */
-    public void setSensor(byte address, Sensor sensor, SensorPort port) throws IOException {
+    public void setSensor(Sensor sensor, SensorPort port) throws IOException {
     	        
     	//Keep internal structure
     	sensorMap.put(port, sensor);
     	
     	//Setup in the Brick Pi
         byte[] packet = buildByteMessageArray(BPSPI_MESSAGE_TYPE.SET_SENSOR_TYPE.getPayloadSize());
-        packet[0] = address;
+        packet[0] = brickPiAddress;
         packet[1] = BPSPI_MESSAGE_TYPE.SET_SENSOR_TYPE.getByte();
         packet[3] = (byte)port.getPort();
         packet[4] = (byte)sensor.getSensorType();
@@ -98,21 +94,72 @@ public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
      * the port a RawSensor will be returned.
      */
     @SuppressWarnings("unchecked")
-    public <T extends Sensor> T getSensor(byte address, SensorPort sensorPort) {
+    public <T extends Sensor> T getSensor(SensorPort sensorPort) throws IOException {
     	
     	Sensor sensor = sensorMap.get(sensorPort);
+    	SensorType sensorType = sensor.getSensorTypeEnum();
         int port = sensorPort.getPort();
+        BPSPI_MESSAGE_TYPE sensorMessage = MapSensorPortToSPICommand(sensorPort);
+        byte sensorCommand = sensorMessage.getByte();
+        int payloadSize = sensorType.getPayloadSize();
         
-        //byte[] packet = buildByteMessageArray()
+        byte[] packet = buildByteMessageArray(payloadSize);
+
+        packet[0] = brickPiAddress;
+        packet[1] = sensorCommand;
         
-        /*
-        if (sensorType[port] == null) {
-            LOGGER.debug("Uninitialized sensor: {}", port);
-            sensorType[port] = new Sensor(SensorType.Raw);
+        byte[] result = sendToBrickPi(packet);
+        
+        if(verifyTransaction(result)) {
+        	//Set the Sensor result value
+        	//Get the value for the sensor
         }
-        */
+        
         return (T) sensor;
-    }    
+    }
+
+    private BPSPI_MESSAGE_TYPE MapSensorPortToSPICommand(SensorPort sensorPort) throws IOException {
+    	BPSPI_MESSAGE_TYPE spiCommand;
+    	switch(sensorPort) {
+    	case S1:
+    		spiCommand = BPSPI_MESSAGE_TYPE.GET_SENSOR_1;
+    		break;
+    	case S2:
+    		spiCommand = BPSPI_MESSAGE_TYPE.GET_SENSOR_2;
+    		break;
+    	case S3:
+    		spiCommand = BPSPI_MESSAGE_TYPE.GET_SENSOR_3;
+    		break;
+    	case S4:
+    		spiCommand = BPSPI_MESSAGE_TYPE.GET_SENSOR_4;
+    		break;
+    	default:
+    		throw new IOException("Unknown Command");
+    	}
+    	return spiCommand;
+    }
+    
+    /**
+     * Decode the sensor type and determine the payload
+     * @param sensor
+     * @return
+     */
+    private int SensorPayload(Sensor sensor) {
+    	int payloadLength = 0;
+    	SensorType sensorEnum = sensor.getSensorTypeEnum(); 
+    	
+    	switch(sensorEnum) {
+    	case TOUCH:
+    	case EV3_TOUCH:
+    		payloadLength = sensorEnum.getPayloadSize();
+    		break;
+		default:
+			payloadLength = 0;
+			break;
+    	}
+    	
+    	return payloadLength;
+    }
 
     /**
      * Set the motor at the particular port. There are currently four motor ports.
@@ -121,16 +168,16 @@ public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
      * the motor configuration.
      * @param port the port. 
      */
-    public void setMotor(byte address, MotorPort motorPort, int power) throws IOException {
+    public void setMotor(MotorPort motorPort, int power) throws IOException {
                 
         byte[] packet = buildByteMessageArray(BPSPI_MESSAGE_TYPE.SET_MOTOR_POWER.getPayloadSize()); 
         
-        packet[0] = address;
+        packet[0] = brickPiAddress;
         packet[1] = BPSPI_MESSAGE_TYPE.SET_MOTOR_POWER.getByte();
         packet[2] = (byte)motorPort.getPort();
         packet[3] = (byte)power;
         
-        byte[] ret =sendToBrickPi(packet);           
+        byte[] ret = sendToBrickPi(packet);           
         
     	if(verifyTransaction(ret)==false) {
     		throw new IOException("failed setSensor");
@@ -139,29 +186,27 @@ public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
         
     
     //Custom message
-    public void getManufacturer(byte address) throws IOException {
+    public void getManufacturer() throws IOException {
     	byte[] sendTest = buildByteMessageArray(BPSPI_MESSAGE_TYPE.GET_MANUFACTURER.getPayloadSize());
     	
-    	sendTest[0] = address;
+    	sendTest[0] = brickPiAddress;
     	sendTest[1] = BPSPI_MESSAGE_TYPE.GET_MANUFACTURER.getByte();
 		//{address, 21, 15, 0}; motor test 
 		//{address, 0x01, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     	
     	byte[] result = spi.write(sendTest);
     	
-    	String retCode = String.format("%02X",result[3]);
-    	System.out.println(retCode);
-    	if(retCode.compareTo("A5")==0) {
+    	if(verifyTransaction(result)==false) {
+    		throw new IOException("get Manufacturer failed");
+    	}
+
+    	if(DEBUG_LEVEL>0) {
     		for(int i=4;i<result.length;i++) {
     			System.out.print(Character.toString((char)result[i]));		
     		}
-    		System.out.println("");
+    		System.out.println("");    		
     	}
     	
-    	try {
-    		Thread.sleep(5000);
-    	} catch(Exception ex) {}
-    	System.exit(0);
     	return;
     }
 

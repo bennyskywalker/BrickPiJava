@@ -1,8 +1,10 @@
-package com.ergotech.brickpi.sensors;
+package com.ergotech.brickpi.sensors.generic;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.ergotech.brickpi.sensors.ev3.EV3ColorSensor;
 
 /**
  * The colors that an EV3 sensor reads.
@@ -21,7 +23,7 @@ public enum Color {
     Brown(7),
     Unknown(666);
     
-    static final Map<Integer, Color> COLORS = createColorMap();
+    public static final Map<Integer, Color> COLORS = createColorMap();
 
     private final int value;
 

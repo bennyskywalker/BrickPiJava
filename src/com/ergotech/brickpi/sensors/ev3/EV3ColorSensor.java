@@ -1,4 +1,8 @@
-package com.ergotech.brickpi.sensors;
+package com.ergotech.brickpi.sensors.ev3;
+
+import com.ergotech.brickpi.sensors.Sensor;
+import com.ergotech.brickpi.sensors.SensorType;
+import com.ergotech.brickpi.sensors.generic.Color;
 
 /**
  * The EV3 color sensor.
@@ -8,7 +12,7 @@ package com.ergotech.brickpi.sensors;
 public class EV3ColorSensor extends Sensor {
 
     public EV3ColorSensor() {
-        super(SensorType.EV3Color);
+        super(SensorType.EV3_COLOR_COLOR);
     }
     
     public Color getColor() {
