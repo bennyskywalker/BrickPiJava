@@ -116,7 +116,7 @@ public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
         	//Set the Sensor result value
         	//Get the value for the sensor
         	//Need to hand this in for the appropriate decoding type
-        	sensor.setValue(result[6]);
+        	sensor.processResult(result);
         }
         
         return (T) sensor;

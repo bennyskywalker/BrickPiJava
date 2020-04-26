@@ -8,6 +8,7 @@
  */
 package com.ergotech.brickpi.sensors;
 
+import java.io.IOException;
 import java.util.BitSet;
 
 import org.slf4j.Logger;
@@ -20,10 +21,28 @@ import com.ergotech.brickpi.BrickPiCommunications;
  * constructor with a SensorType, but there are some subclasses of Sensor that provide a 
  * richer sensor specific api.
  */
-public class Sensor {
+public abstract class Sensor {
     
     protected final Logger LOGGER = 
             LoggerFactory.getLogger(getClass().getName());
+    
+    public enum SENSOR_STATE {
+        VALID_DATA(0),
+        NOT_CONFIGURED(1),
+        CONFIGURING(2),
+        NO_DATA(3),
+        I2C_ERROR(4);
+
+    	private int ordinal;
+    	
+    	SENSOR_STATE(int ordinal) {
+    		this.ordinal = ordinal;
+    	}
+    	
+    	public int getInt() {
+    		return this.ordinal;
+    	}
+    }
 
     public static final byte MASK_D0_M = 0x01;
     public static final byte MASK_D0_S = 0x08;
@@ -136,12 +155,8 @@ public class Sensor {
     public static final byte TYPE_SENSOR_EV3_TOUCH_0 = 67;
     public static final byte TYPE_SENSOR_EV3_TOUCH_DEBOUNCE = 68;
 
-    /**
-     * The current value of the sensor.
-     */
-    protected volatile int value;
     
-    private final SensorType sensorType;
+    protected final SensorType sensorType;
 
     /**
      * Returns the type of this sensor.
@@ -161,58 +176,12 @@ public class Sensor {
     public Sensor(SensorType sensorType) {
         this.sensorType = sensorType;
     }
-
+  
     /**
-     * Encode the data associated with the sensor to the outgoing message. The
-     * default method does nothing.
-     *
-     * @param message the BitSet representing the outgoing message.
-     * @param startLocation the starting bit location in the message at which to
-     * begin encoding
-     * @return the ending location. That is the startLocation for the next
-     * encoding.
+     * Process the sensor result string
+     * Set the values internally
+     * @param message
      */
-    public int encodeToSetup(BitSet message, int startLocation) {
-        return startLocation; // nothing to encode.
-    }
-
-    /**
-     * Encode the data associated with the sensor to the outgoing message. The
-     * default method does nothing.
-     *
-     * @param message the BitSet representing the outgoing message.
-     * @param startLocation the starting bit location in the message at which to
-     * begin encoding
-     * @return the ending location. That is the startLocation for the next
-     * encoding.
-     */
-    public final int encodeToValueRequest(BitSet message, int startLocation) {
-        return startLocation; // nothing to encode.
-    }
-
-    /**
-     * Decode the data associated with the sensor from the incoming message.
-     *
-     * @param message the BitSet representing the outgoing message.
-     * @param startLocation the starting bit location in the message at which to
-     * begin decoding
-     * @return the ending location. That is the startLocation for the next
-     * encoding.
-     */
-    public final int decodeValues(byte[] message, int startLocation) {
-        value = BrickPiCommunications.decodeInt(sensorType.getDecodeBitCount(), message, startLocation);
-        return startLocation + sensorType.getDecodeBitCount();
-    }
-    
-    public void setValue(int value) {
-    	this.value = value; 
-    }
-
-    /**
-     * Returns the current value.
-     */
-    public int getValue() {
-        return value;
-    }
-
+    public abstract void processResult(byte[]message) throws IOException;
+        
 }

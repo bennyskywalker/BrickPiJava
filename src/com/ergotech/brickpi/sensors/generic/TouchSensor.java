@@ -8,6 +8,8 @@
  */
 package com.ergotech.brickpi.sensors.generic;
 
+import java.io.IOException;
+
 import com.ergotech.brickpi.sensors.Sensor;
 import com.ergotech.brickpi.sensors.SensorType;
 
@@ -39,6 +41,12 @@ public class TouchSensor extends Sensor {
     public int getValue() {
         return getValue() > 0 ? 1 : 0;
     }
+
+	@Override
+	public void processResult(byte[] message) throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
 
 
 }

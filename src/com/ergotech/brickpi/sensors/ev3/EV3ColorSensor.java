@@ -1,5 +1,7 @@
 package com.ergotech.brickpi.sensors.ev3;
 
+import java.io.IOException;
+
 import com.ergotech.brickpi.sensors.Sensor;
 import com.ergotech.brickpi.sensors.SensorType;
 import com.ergotech.brickpi.sensors.generic.Color;
@@ -20,4 +22,13 @@ public class EV3ColorSensor extends Sensor {
         return color == null ? Color.Unknown : color;
     }
 
+    public int getValue() {
+    	return 0;
+    }
+
+	@Override
+	public void processResult(byte[] message) throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
 }
