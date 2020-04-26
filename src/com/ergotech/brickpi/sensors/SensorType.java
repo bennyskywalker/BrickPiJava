@@ -42,7 +42,7 @@ public enum SensorType {
 
     EV3_INFRARED_PROXIMITY(26),
     EV3_INFRARED_SEEK(27),
-    EV3_INFRARED_REMOTE(28);
+    EV3_INFRARED_REMOTE(28,6);
 	
 	private int type;
 	private int payloadSize;
