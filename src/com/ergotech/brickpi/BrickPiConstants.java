@@ -64,15 +64,15 @@ public class BrickPiConstants {
 
         OFFSET_MOTOR_ENCODER(29), //29
 
-        GET_MOTOR_A_ENCODER(30), //30
-        GET_MOTOR_B_ENCODER(31),
-        GET_MOTOR_C_ENCODER(32),
-        GET_MOTOR_D_ENCODER(33),
+        GET_MOTOR_A_ENCODER(30, 4), //30
+        GET_MOTOR_B_ENCODER(31, 4),
+        GET_MOTOR_C_ENCODER(32, 4),
+        GET_MOTOR_D_ENCODER(33, 4),
 
-        GET_MOTOR_A_STATUS(34), //34
-        GET_MOTOR_B_STATUS(35),
-        GET_MOTOR_C_STATUS(36),
-        GET_MOTOR_D_STATUS(37);
+        GET_MOTOR_A_STATUS(34, 8), //34
+        GET_MOTOR_B_STATUS(35, 8),
+        GET_MOTOR_C_STATUS(36, 8),
+        GET_MOTOR_D_STATUS(37, 8);
 		
 		private final int message;
 		private final int payloadSize;

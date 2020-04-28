@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import com.ergotech.brickpi.BrickPiConstants.BPSPI_MESSAGE_TYPE;
 import com.ergotech.brickpi.motion.MotorPort;
+import com.ergotech.brickpi.motion.MotorStatus;
 import com.ergotech.brickpi.sensors.Sensor;
 import com.ergotech.brickpi.sensors.SensorPort;
 import com.ergotech.brickpi.sensors.SensorType;
@@ -57,6 +58,14 @@ public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
 		
 		//motorTest();
     }
+    
+    private byte getMotorPortsFromArray(MotorPort motorPorts[]) {
+    	int motorPortByte = 0x00;
+    	for(MotorPort motorPort : motorPorts) {
+    		motorPortByte = motorPortByte | motorPort.getPort();
+    	}
+    	return (byte)motorPortByte;
+    }
 
     /**
      * Set the sensor at the particular port. There are current four sensor
@@ -100,7 +109,6 @@ public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
     	
     	Sensor sensor = sensorMap.get(sensorPort);
     	SensorType sensorType = sensor.getSensorTypeEnum();
-        int port = sensorPort.getPort();
         BPSPI_MESSAGE_TYPE sensorMessage = MapSensorPortToSPICommand(sensorPort);
         byte sensorCommand = sensorMessage.getByte();
         int payloadSize = sensorType.getPayloadSize();
@@ -144,41 +152,19 @@ public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
     }
     
     /**
-     * Decode the sensor type and determine the payload
-     * @param sensor
-     * @return
-     */
-    private int SensorPayload(Sensor sensor) {
-    	int payloadLength = 0;
-    	SensorType sensorEnum = sensor.getSensorTypeEnum(); 
-    	
-    	switch(sensorEnum) {
-    	case TOUCH:
-    	case EV3_TOUCH:
-    		payloadLength = sensorEnum.getPayloadSize();
-    		break;
-		default:
-			payloadLength = 0;
-			break;
-    	}
-    	
-    	return payloadLength;
-    }
-
-    /**
      * Set the motor at the particular port. There are currently four motor ports.
      *
      * @param motor the motor to associate with the port. May be null to clear
      * the motor configuration.
      * @param port the port. 
      */
-    public void setMotor(MotorPort motorPort, int power) throws IOException {
+    public void setMotor(MotorPort motorPort[], int power) throws IOException {
                 
         byte[] packet = buildByteMessageArray(BPSPI_MESSAGE_TYPE.SET_MOTOR_POWER.getPayloadSize()); 
         
         packet[0] = brickPiAddress;
         packet[1] = BPSPI_MESSAGE_TYPE.SET_MOTOR_POWER.getByte();
-        packet[2] = (byte)motorPort.getPort();
+        packet[2] = (byte)getMotorPortsFromArray(motorPort);
         packet[3] = (byte)power;
         
         byte[] ret = sendToBrickPi(packet);
@@ -188,6 +174,7 @@ public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
     	}
     }
     
+    /*
     public void motorTest() {
     	byte[] packet = new byte[]{0x01, 21, 15, 30};
     	
@@ -201,18 +188,16 @@ public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
     	}
     	catch(Exception ex) {}
     }
-        
+    */        
     
     //Custom message
     public void getManufacturer() throws IOException {
-    	byte[] sendTest = buildByteMessageArray(BPSPI_MESSAGE_TYPE.GET_MANUFACTURER.getPayloadSize());
+    	byte[] packet = buildByteMessageArray(BPSPI_MESSAGE_TYPE.GET_MANUFACTURER.getPayloadSize());
     	
-    	sendTest[0] = brickPiAddress;
-    	sendTest[1] = BPSPI_MESSAGE_TYPE.GET_MANUFACTURER.getByte();
-		//{address, 21, 15, 0}; motor test 
-		//{address, 0x01, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    	packet[0] = brickPiAddress;
+    	packet[1] = BPSPI_MESSAGE_TYPE.GET_MANUFACTURER.getByte();
     	
-    	byte[] result = sendToBrickPi(sendTest);
+    	byte[] result = sendToBrickPi(packet);
     	
     	if(verifyTransaction(result)==false) {
     		throw new IOException("get Manufacturer failed");
@@ -228,4 +213,135 @@ public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
     	return;
     }
 
+	@Override
+	public void setMotorPosition(MotorPort motorPort[], int position) throws IOException {
+    	byte[] packet = buildByteMessageArray(BPSPI_MESSAGE_TYPE.SET_MOTOR_POSITION.getPayloadSize());
+    	
+    	packet[0] = brickPiAddress;
+    	packet[1] = BPSPI_MESSAGE_TYPE.SET_MOTOR_POSITION.getByte();
+    	packet[2] = (byte)getMotorPortsFromArray(motorPort);
+    	packet[3] = (byte)((position >> 24) & 0xFF);
+    	packet[4] = (byte)((position >> 16) & 0xFF);
+    	packet[5] = (byte)((position >> 8) & 0xFF);
+    	packet[6] = (byte)(position & 0xFF);
+    	byte[] result = sendToBrickPi(packet);
+    	
+    	if(verifyTransaction(result)==false) {
+    		throw new IOException("get Manufacturer failed");
+    	}
+	}
+
+	@Override
+	public void setMotorEncoderOffset(MotorPort motorPort[], int offset) throws IOException {
+    	byte[] packet = buildByteMessageArray(BPSPI_MESSAGE_TYPE.OFFSET_MOTOR_ENCODER.getPayloadSize());
+
+		packet[0] = brickPiAddress;
+		packet[1] = BPSPI_MESSAGE_TYPE.OFFSET_MOTOR_ENCODER.getByte();
+		packet[2] = (byte)getMotorPortsFromArray(motorPort);
+		packet[3] = (byte)((offset >> 24) & 0xFF);
+		packet[4] = (byte)((offset >> 16) & 0xFF);
+		packet[5] = (byte)((offset >> 8) & 0xFF);
+		packet[6] = (byte)(offset & 0xFF);
+		
+		byte[] result = sendToBrickPi(packet);
+    	
+    	if(verifyTransaction(result)==false) {
+    		throw new IOException("get Manufacturer failed");
+    	}
+	}
+	
+	@Override
+	public void setMotorPositionRelative(MotorPort motorPorts[], int degrees) throws IOException {
+		for(MotorPort motorPort : motorPorts) {
+			// assign error to the error value returned by get_motor_encoder, and if not 0:
+			int encoder = getMotorEncoder(motorPort);
+		
+			// assign error to the error value returned by get_motor_encoder, and if not 0:
+			setMotorPosition(new MotorPort[] {motorPort}, (encoder + degrees));
+	    }
+	}	
+
+	@Override
+	public int getMotorEncoder(MotorPort motorPort) throws IOException {
+		int value = 0;
+		BPSPI_MESSAGE_TYPE msg = getMotorEncodeFromPort(motorPort);
+    	byte[] packet = buildByteMessageArray(msg.getPayloadSize());
+
+		packet[0] = brickPiAddress;
+		packet[1] = msg.getByte();
+		
+		byte[] result = sendToBrickPi(packet);
+    	
+    	if(verifyTransaction(result)==true) {
+    		//If this result verifies
+    		value = ((result[4] << 24) | 
+    				(result[5] << 16) | 
+    				(result[6] << 8) | 
+    				result[7]);
+    	}
+    	
+		return value;
+	}
+
+	@Override
+	public MotorStatus getMotorStatus(MotorPort motorPort) throws IOException {
+		BPSPI_MESSAGE_TYPE msg = getMotorStatusFromPort(motorPort);
+    	byte[] packet = buildByteMessageArray(msg.getPayloadSize());		
+		packet[0] = brickPiAddress;
+		packet[1] = msg.getByte();		
+		byte[] result = sendToBrickPi(packet);
+
+		int state = result[4];
+		int power = result[5];
+		int position = ((result[6] << 24) | 
+						(result[7] << 16) | 
+						(result[8] << 8) | 
+						result[9]);
+		int dps = ((result[10] << 8) | result[11]);
+		
+		MotorStatus motorStatus = new MotorStatus(state, power, position, dps);
+		return motorStatus;
+	}
+	
+	private BPSPI_MESSAGE_TYPE getMotorEncodeFromPort(MotorPort motorPort) throws IOException {
+		BPSPI_MESSAGE_TYPE msg;
+		switch(motorPort) {
+		case MA:
+			msg = BPSPI_MESSAGE_TYPE.GET_MOTOR_A_ENCODER;
+			break;
+		case MB:
+			msg = BPSPI_MESSAGE_TYPE.GET_MOTOR_B_ENCODER;
+			break;
+		case MC:
+			msg = BPSPI_MESSAGE_TYPE.GET_MOTOR_C_ENCODER;
+			break;
+		case MD:
+			msg = BPSPI_MESSAGE_TYPE.GET_MOTOR_D_ENCODER;
+			break;
+		default:
+			throw new IOException("Incorrect Port");
+		}
+		return msg;
+	}
+	
+	private BPSPI_MESSAGE_TYPE getMotorStatusFromPort(MotorPort motorPort) throws IOException {
+		BPSPI_MESSAGE_TYPE msg;
+		switch(motorPort) {
+		case MA:
+			msg = BPSPI_MESSAGE_TYPE.GET_MOTOR_A_STATUS;
+			break;
+		case MB:
+			msg = BPSPI_MESSAGE_TYPE.GET_MOTOR_B_STATUS;
+			break;
+		case MC:
+			msg = BPSPI_MESSAGE_TYPE.GET_MOTOR_C_STATUS;
+			break;
+		case MD:
+			msg = BPSPI_MESSAGE_TYPE.GET_MOTOR_D_STATUS;
+			break;
+		default:
+			throw new IOException("Incorrect Port");
+		}
+		return msg;
+	}	
 }
