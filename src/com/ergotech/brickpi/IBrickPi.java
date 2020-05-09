@@ -2,12 +2,21 @@ package com.ergotech.brickpi;
 
 import java.io.IOException;
 
+import com.ergotech.brickpi.motion.Motor;
 import com.ergotech.brickpi.motion.MotorPort;
 import com.ergotech.brickpi.motion.MotorStatus;
 import com.ergotech.brickpi.sensors.Sensor;
 import com.ergotech.brickpi.sensors.SensorPort;
 
 public interface IBrickPi {
+	
+	/**
+	 * Initialize a new motor.  Use this to set the direction
+	 * and resolution.
+	 * @param motor
+	 * @param motorPort
+	 */
+	public void initializeMotor(MotorPort motorPort, Motor motor);
 	
 	/**
 	 * Fire the motor

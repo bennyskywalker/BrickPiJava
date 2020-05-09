@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.ergotech.brickpi.BrickPiConstants.BPSPI_MESSAGE_TYPE;
+import com.ergotech.brickpi.motion.Motor;
 import com.ergotech.brickpi.motion.MotorPort;
 import com.ergotech.brickpi.motion.MotorStatus;
 import com.ergotech.brickpi.sensors.Sensor;
@@ -27,8 +28,12 @@ public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
     
     private Map<SensorPort, Sensor> sensorMap;
     
+    //This will hold any configured motor ports - A, B, C, D = 0, 1, 2, 3
+    //The configured motors will determine any direction and resolutions and
+    //encoder returns
+    private Motor[] motorPortSettings = new Motor[4];
     
-
+    
     /**
      * Return the brick pi singleton.
      *
@@ -152,6 +157,46 @@ public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
     }
     
     /**
+     * Initialize the motor ports.
+     */
+    public void initializeMotor(MotorPort motorPort, Motor motor)
+    {
+    	int index = 0;
+    	switch(motorPort) {
+    	case MA:
+    		index = 0;
+    		break;
+    	case MB:
+    		index = 1;
+    		break;
+    	case MC:
+    		index = 2;
+    		break;
+    	case MD:
+    		index = 3;
+    		break;
+    	}
+    	
+    	motorPortSettings[index] = motor;    	
+    	return;
+    }
+    
+    public int getMBIndex(MotorPort mPort) throws IOException {
+    	switch(mPort) {
+    	case MA:
+    		return 0;
+    	case MB:
+    		return 1;
+    	case MC:
+    		return 2;
+    	case MD:
+    		return 3;
+    	default:
+    		throw new IOException("Index out of bounds.");
+    	}
+    }
+    
+    /**
      * Set the motor at the particular port. There are currently four motor ports.
      *
      * @param motor the motor to associate with the port. May be null to clear
@@ -159,19 +204,30 @@ public class BrickPiSPI extends BrickPiCommunications implements IBrickPi {
      * @param port the port. 
      */
     public void setMotor(MotorPort motorPort[], int power) throws IOException {
-                
-        byte[] packet = buildByteMessageArray(BPSPI_MESSAGE_TYPE.SET_MOTOR_POWER.getPayloadSize()); 
-        
-        packet[0] = brickPiAddress;
-        packet[1] = BPSPI_MESSAGE_TYPE.SET_MOTOR_POWER.getByte();
-        packet[2] = (byte)getMotorPortsFromArray(motorPort);
-        packet[3] = (byte)power;
-        
-        byte[] ret = sendToBrickPi(packet);
-                
-    	if(verifyTransaction(ret)==false) {
-    		throw new IOException("failed setSensor");
+    	byte[] packet; 
+        byte[] ret;
+        Motor mConfig;
+    	
+    	for(MotorPort mPort:motorPort) {
+    		mConfig = motorPortSettings[getMBIndex(mPort)];
+    		if(mConfig==null) {
+    			throw new IOException("Motor not initialize");
+    		}
+    		
+    		packet = buildByteMessageArray(BPSPI_MESSAGE_TYPE.SET_MOTOR_POWER.getPayloadSize()); 
+            
+            packet[0] = brickPiAddress;
+            packet[1] = BPSPI_MESSAGE_TYPE.SET_MOTOR_POWER.getByte();
+            packet[2] = (byte)mPort.getPort();
+            packet[3] = (byte)(power * mConfig.getDirectionVector());
+            
+            ret = sendToBrickPi(packet);
+                    
+        	if(verifyTransaction(ret)==false) {
+        		throw new IOException("failed setSensor");
+        	}    		
     	}
+        
     }
     
     /*

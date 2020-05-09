@@ -18,7 +18,6 @@ import java.util.BitSet;
 public class Motor {
 
     public enum Direction {
-
         CLOCKWISE, COUNTER_CLOCKWISE
     };
 
@@ -91,6 +90,7 @@ public class Motor {
         currentSpeed = Double.MAX_VALUE;
         currentEncoderValue = Integer.MAX_VALUE;
         ticksPerRevolution = 1440;  // according to everything I've read, this should be 720;  The reality seems to be 1440 (for me)
+        direction = Direction.CLOCKWISE;
     }
 
     /** returns the instance to which this Motor is associated.
@@ -315,6 +315,13 @@ public class Motor {
     public Direction getDirection() {
         return direction;
     }
+    
+    public int getDirectionVector() {
+    	if(direction==Direction.CLOCKWISE)
+    		return 1;
+    	else
+    		return -1;
+    }
 
     /**
      * Set the direction.
@@ -323,12 +330,6 @@ public class Motor {
      */
     public void setDirection(Direction direction) {
         this.direction = direction;
-        if (brickPi != null) {
-            // wake up the update thread so that the values are immediately send to the brick pi
-            synchronized (brickPi) {
-                brickPi.notify();
-            }
-        }
     }
 
     /**
