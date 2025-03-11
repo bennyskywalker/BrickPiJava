@@ -8,8 +8,8 @@ version = '1.0-SNAPSHOT'
 
 description = "BrickPi"
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = 21
+targetCompatibility = 21
 
 // we include the pi4j classes in our jar, so we don't want the pi4j library 
 // specified as a dependency in the generated pom.  Creating this separate 
