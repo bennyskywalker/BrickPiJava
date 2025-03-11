@@ -1,7 +1,8 @@
 BrickPiJava
 ===========
 
-Java implementation of Raspberry PI/Brick Pi interface
+Java implementation of Raspberry PI/Brick Pi interface.
+Note: This does not apply to the BrickPi3.
 
 
 You can clone a complete Netbeans Project including the required libraries.  It uses pi4j.  The jar in the project has been modified to support he 500000 baud rate.
